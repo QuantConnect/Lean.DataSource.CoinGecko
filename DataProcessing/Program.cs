@@ -13,11 +13,11 @@
  * limitations under the License.
 */
 
-using System;
-using System.IO;
 using QuantConnect.Configuration;
 using QuantConnect.Logging;
 using QuantConnect.Util;
+using System;
+using System.IO;
 
 namespace QuantConnect.DataProcessing
 {
@@ -37,17 +37,17 @@ namespace QuantConnect.DataProcessing
             var destinationDirectory = Path.Combine(
                 Config.Get("temp-output-directory", "/temp-output-directory"),
                 "alternative",
-                "vendorname");
+                "coingecko");
 
-            MyCustomDataDownloader instance = null;
+            CoinGeckoUniverseDataDownloader instance = null;
             try
             {
                 // Pass in the values we got from the configuration into the downloader/converter.
-                instance = new MyCustomDataDownloader(destinationDirectory);
+                instance = new CoinGeckoUniverseDataDownloader(destinationDirectory);
             }
             catch (Exception err)
             {
-                Log.Error(err, $"QuantConnect.DataProcessing.Program.Main(): The downloader/converter for {MyCustomDataDownloader.VendorDataName} {MyCustomDataDownloader.VendorDataName} data failed to be constructed");
+                Log.Error(err, $"QuantConnect.DataProcessing.Program.Main(): The downloader/converter for {CoinGeckoUniverseDataDownloader.VendorName} {CoinGeckoUniverseDataDownloader.VendorName} data failed to be constructed");
                 Environment.Exit(1);
             }
 
@@ -59,13 +59,13 @@ namespace QuantConnect.DataProcessing
                 var success = instance.Run();
                 if (!success)
                 {
-                    Log.Error($"QuantConnect.DataProcessing.Program.Main(): Failed to download/process {MyCustomDataDownloader.VendorName} {MyCustomDataDownloader.VendorDataName} data");
+                    Log.Error($"QuantConnect.DataProcessing.Program.Main(): Failed to download/process {CoinGeckoUniverseDataDownloader.VendorName} data");
                     Environment.Exit(1);
                 }
             }
             catch (Exception err)
             {
-                Log.Error(err, $"QuantConnect.DataProcessing.Program.Main(): The downloader/converter for {MyCustomDataDownloader.VendorDataName} {MyCustomDataDownloader.VendorDataName} data exited unexpectedly");
+                Log.Error(err, $"QuantConnect.DataProcessing.Program.Main(): The downloader/converter for {CoinGeckoUniverseDataDownloader.VendorName} data exited unexpectedly");
                 Environment.Exit(1);
             }
             finally

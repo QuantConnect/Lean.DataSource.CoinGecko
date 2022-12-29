@@ -2,14 +2,14 @@
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
     <RootNamespace>QuantConnect.DataSource</RootNamespace>
-    <AssemblyName>QuantConnect.DataSource.MyCustomDataType</AssemblyName>
+    <AssemblyName>QuantConnect.DataSource.CoinGecko</AssemblyName>
     <OutputPath>bin\$(Configuration)</OutputPath>
-    <DocumentationFile>$(OutputPath)\QuantConnect.DataSource.MyCustomDataType.xml</DocumentationFile>
+    <DocumentationFile>$(OutputPath)\QuantConnect.DataSource.CoinGecko.xml</DocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="QuantConnect.Algorithm.Framework" Version="2.5.*" />
     <PackageReference Include="QuantConnect.Common" Version="2.5.*" />
-    <PackageReference Include="protobuf-net" Version="3.0.29" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
   </ItemGroup>
 
@@ -20,8 +20,9 @@
     <Compile Remove="DataProcessing\**" />
     <EmbeddedResource Remove="DataProcessing\**" />
     <None Remove="DataProcessing\**" />
-    <Compile Remove="Demonstration.cs" />
-    <Compile Remove="DemonstrationUniverse.cs" />
+    <Compile Remove="CoinGeckoAlgorithm.cs" />
+    <Compile Remove="CoinGeckoUniverseSelectionAlgorithm.cs" />
+    <Compile Remove="CoinGeckoUniverseSelectionModelAlgorithm.cs" />
     <None Remove=".gitignore" />
   </ItemGroup>
 </Project>

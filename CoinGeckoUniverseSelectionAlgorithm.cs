@@ -14,9 +14,7 @@
  *
 */
 
-using System;
 using System.Linq;
-using QuantConnect.Data;
 using QuantConnect.Data.UniverseSelection;
 using QuantConnect.DataSource;
 
@@ -25,7 +23,7 @@ namespace QuantConnect.Algorithm.CSharp
     /// <summary>
     /// Example algorithm using the custom data type as a source of alpha
     /// </summary>
-    public class CustomDataUniverse : QCAlgorithm
+    public class CoinGeckoUniverseSelectionAlgorithm : QCAlgorithm
     {
         /// <summary>
         /// Initialise the data and resolution required, as well as the cash and start-end dates for your algorithm. All algorithms must initialized.
@@ -40,17 +38,19 @@ namespace QuantConnect.Algorithm.CSharp
             SetCash(100000);
 
             // add a custom universe data source (defaults to usa-equity)
-            AddUniverse<MyCustomDataUniverseType>("MyCustomDataUniverseType", Resolution.Daily, data =>
+            AddUniverse<CoinGeckoUniverse>("CoinGeckoUniverse", Resolution.Daily, data =>
             {
                 foreach (var datum in data)
                 {
-                    Log($"{datum.Symbol},{datum.SomeCustomProperty},{datum.SomeNumericProperty}");
+                    Log($"{datum.Coin},{datum.MarketCap},{datum.Price}");
                 }
 
                 // define our selection criteria
                 return from d in data
-                       where d.SomeCustomProperty == "buy"
-                       select d.Symbol;
+                       where d.MarketCap > 1000000
+                       // Use the CreateSymbol method to generate the Symbol object for
+                       // the desired market (Binance) and quote currency (e.g. BUSD)
+                       select d.CreateSymbol(Market.Binance, "BUSD");
             });
         }
 
