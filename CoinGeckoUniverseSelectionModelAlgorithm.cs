@@ -33,8 +33,8 @@ namespace QuantConnect.Algorithm.CSharp
             // Data ADDED via universe selection is added with Daily resolution.
             UniverseSettings.Resolution = Resolution.Daily;
 
-            SetStartDate(2022, 2, 14);
-            SetEndDate(2022, 2, 18);
+            SetStartDate(2018, 4, 4);
+            SetEndDate(2018, 4, 6);
             SetCash(100000);
 
             // add a custom universe data source (defaults to usa-equity)
@@ -46,11 +46,9 @@ namespace QuantConnect.Algorithm.CSharp
                 }
 
                 // define our selection criteria
-                return from d in data
-                    where d.MarketCap > 1000000
-                    // Use the CreateSymbol method to generate the Symbol object for
-                    // the desired market (Binance) and quote currency (e.g. BUSD)
-                    select d.CreateSymbol(Market.Binance, "BUSD");
+                return (from d in data
+                        orderby d.MarketCap descending
+                        select d.CreateSymbol(Market.GDAX, "USD")).Take(3);
             }));
         }
 

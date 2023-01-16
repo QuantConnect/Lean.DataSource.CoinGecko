@@ -38,12 +38,13 @@ namespace QuantConnect.DataProcessing
                 Config.Get("temp-output-directory", "/temp-output-directory"),
                 "alternative",
                 "coingecko");
+            var processedDirectory = Path.Combine(Globals.DataFolder, "alternative", "coingecko");
 
             CoinGeckoUniverseDataDownloader instance = null;
             try
             {
                 // Pass in the values we got from the configuration into the downloader/converter.
-                instance = new CoinGeckoUniverseDataDownloader(destinationDirectory);
+                instance = new CoinGeckoUniverseDataDownloader(destinationDirectory, processedDirectory);
             }
             catch (Exception err)
             {

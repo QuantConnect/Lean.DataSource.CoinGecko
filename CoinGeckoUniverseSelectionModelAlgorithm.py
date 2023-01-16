@@ -40,7 +40,7 @@ class CoinGeckoUniverseSelectionModelAlgorithm(QCAlgorithm):
             self.Log(f'{datum.Coin},{datum.MarketCap},{datum.Price}')
 
         # define our selection criteria
-        selected = sorted(data, key=lambda x: x.MarketCap, reverse=True)[0:3]
+        selected = sorted(data, key=lambda x: x.MarketCap, reverse=True)[:3]
                     
         # Use the CreateSymbol method to generate the Symbol object for
         # the desired market (Coinbase) and quote currency (e.g. USD)
