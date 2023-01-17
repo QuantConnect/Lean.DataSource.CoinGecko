@@ -18,6 +18,7 @@ using QuantConnect.Data;
 using QuantConnect.Util;
 using QuantConnect.Orders;
 using QuantConnect.Algorithm;
+using QuantConnect.Indicators;
 using QuantConnect.DataSource;
 
 namespace QuantConnect.DataLibrary.Tests

@@ -37,7 +37,7 @@ class CoinGeckoUniverseSelectionAlgorithm(QCAlgorithm):
         :return: List of Symbol objects '''
 
         for datum in data:
-            self.Log(f'{datum.Coin},{datum.MarketCap},{datum.Price}')
+            self.Debug(f'{datum.Coin},{datum.MarketCap},{datum.Price}')
 
         # define our selection criteria
         selected = sorted(data, key=lambda x: x.MarketCap, reverse=True)[:3]
@@ -47,4 +47,4 @@ class CoinGeckoUniverseSelectionAlgorithm(QCAlgorithm):
         return [x.CreateSymbol(Market.GDAX, "USD") for x in selected]
     
     def OnSecuritiesChanged(self, changes):
-        self.Log(f'{changes}')
+        self.Debug(f'{changes}')

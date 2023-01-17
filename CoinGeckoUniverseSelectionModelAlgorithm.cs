@@ -42,7 +42,7 @@ namespace QuantConnect.Algorithm.CSharp
             {
                 foreach (var datum in data)
                 {
-                    Log($"{datum.Coin},{datum.MarketCap},{datum.Price}");
+                    Debug($"{datum.Coin},{datum.MarketCap},{datum.Price}");
                 }
 
                 // define our selection criteria
@@ -58,7 +58,7 @@ namespace QuantConnect.Algorithm.CSharp
         /// <param name="changes">Security additions/removals for this time step</param>
         public override void OnSecuritiesChanged(SecurityChanges changes)
         {
-            Log(changes.ToString());
+            Debug(changes.ToString());
         }
     }
 }
