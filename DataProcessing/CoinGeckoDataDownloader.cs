@@ -64,8 +64,8 @@ namespace QuantConnect.DataProcessing
             _processedUniverseFolder = Path.Combine(_processedFolder, "universe");
 
             // CoinGecko: Our Free API* has a rate limit of 10-50 calls/minute
-            // Represents rate limits of 9 requests per 1 minute
-            _indexGate = new RateGate(9, TimeSpan.FromMinutes(1));
+            // Represents rate limits of 5 requests per 1 minute
+            _indexGate = new RateGate(5, TimeSpan.FromMinutes(1));
 
             Directory.CreateDirectory(_destinationFolder);
             Directory.CreateDirectory(_processedFolder);
