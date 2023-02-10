@@ -14,9 +14,7 @@
  *
 */
 
-using System;
 using System.Linq;
-using QuantConnect.Data;
 using QuantConnect.Data.UniverseSelection;
 using QuantConnect.DataSource;
 
@@ -25,7 +23,7 @@ namespace QuantConnect.Algorithm.CSharp
     /// <summary>
     /// Example algorithm using the custom data type as a source of alpha
     /// </summary>
-    public class CustomDataUniverse : QCAlgorithm
+    public class CoinGeckoUniverseSelectionModelAlgorithm : QCAlgorithm
     {
         /// <summary>
         /// Initialise the data and resolution required, as well as the cash and start-end dates for your algorithm. All algorithms must initialized.
@@ -35,23 +33,23 @@ namespace QuantConnect.Algorithm.CSharp
             // Data ADDED via universe selection is added with Daily resolution.
             UniverseSettings.Resolution = Resolution.Daily;
 
-            SetStartDate(2022, 2, 14);
-            SetEndDate(2022, 2, 18);
+            SetStartDate(2018, 4, 4);
+            SetEndDate(2018, 4, 6);
             SetCash(100000);
 
             // add a custom universe data source (defaults to usa-equity)
-            AddUniverse<MyCustomDataUniverseType>("MyCustomDataUniverseType", Resolution.Daily, data =>
+            SetUniverseSelection(new CoinGeckoUniverseSelectionModel(data =>
             {
                 foreach (var datum in data)
                 {
-                    Log($"{datum.Symbol},{datum.SomeCustomProperty},{datum.SomeNumericProperty}");
+                    Debug($"{datum.Coin},{datum.MarketCap},{datum.Price}");
                 }
 
                 // define our selection criteria
-                return from d in data
-                       where d.SomeCustomProperty == "buy"
-                       select d.Symbol;
-            });
+                return (from d in data
+                        orderby d.MarketCap descending
+                        select d.CreateSymbol(Market.GDAX, "USD", SecurityType.Crypto)).Take(3);
+            }));
         }
 
         /// <summary>
@@ -60,7 +58,7 @@ namespace QuantConnect.Algorithm.CSharp
         /// <param name="changes">Security additions/removals for this time step</param>
         public override void OnSecuritiesChanged(SecurityChanges changes)
         {
-            Log(changes.ToString());
+            Debug(changes.ToString());
         }
     }
 }

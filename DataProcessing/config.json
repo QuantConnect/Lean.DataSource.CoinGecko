@@ -1,5 +1,3 @@
 {
-    "data-folder": "../../../Data/",
-
-    "vendor-auth-token": ""
+    "data-folder": "../../../Data"
 }

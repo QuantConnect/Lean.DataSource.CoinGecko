@@ -16,7 +16,6 @@
 
 using System;
 using NodaTime;
-using ProtoBuf;
 using System.IO;
 using QuantConnect.Data;
 using System.Collections.Generic;
@@ -25,30 +24,35 @@ using System.Globalization;
 namespace QuantConnect.DataSource
 {
     /// <summary>
-    /// Example custom data type
+    /// Coin Gecko data which contains Price, Volume, and Market Cap in USD for cryptocurrencies
     /// </summary>
-    [ProtoContract(SkipConstructor = true)]
-    public class MyCustomDataUniverseType : BaseData
+    public class CoinGecko : BaseData
     {
-        /// <summary>
-        /// Some custom data property
-        /// </summary>
-        public string SomeCustomProperty { get; set; } 
+        private static readonly TimeSpan _period = TimeSpan.FromDays(1);
 
         /// <summary>
-        /// Some custom data property
+        /// Coin Name
         /// </summary>
-        public decimal SomeNumericProperty { get; set; }
+        public string Coin => Symbol.Value;
 
         /// <summary>
-        /// Time passed between the date of the data and the time the data became available to us
+        /// Volume in USD of the coin for that day
         /// </summary>
-        public TimeSpan Period { get; set; } = TimeSpan.FromDays(1);
+        public decimal Volume { get; set; }
+
+        /// <summary>
+        /// Market Cap in USD of the coin for that day
+        /// </summary>
+        public decimal MarketCap { get; set; }
 
         /// <summary>
         /// Time the data became available
         /// </summary>
-        public override DateTime EndTime => Time + Period;
+        public override DateTime EndTime
+        {
+            get => Time + _period; 
+            set => Time = value - _period;
+        }
 
         /// <summary>
         /// Return the URL string source of the file. This will be converted to a stream
@@ -63,9 +67,8 @@ namespace QuantConnect.DataSource
                 Path.Combine(
                     Globals.DataFolder,
                     "alternative",
-                    "mycustomdatatype",
-                    "universe",
-                    $"{date.ToStringInvariant(DateFormat.EightCharacter)}.csv"
+                    "coingecko",
+                    $"{config.Symbol.Value.ToLowerInvariant()}.csv"
                 ),
                 SubscriptionTransportMedium.LocalFile
             );
@@ -81,61 +84,79 @@ namespace QuantConnect.DataSource
         /// <returns>New instance</returns>
         public override BaseData Reader(SubscriptionDataConfig config, string line, DateTime date, bool isLiveMode)
         {
-            var csv = line.Split(','); 
+            var csv = line.Split(',');
 
-            var someNumericProperty = decimal.Parse(csv[2], NumberStyles.Any, CultureInfo.InvariantCulture); 
-
-            return new MyCustomDataUniverseType
+            return new CoinGecko
             {
-                Symbol = new Symbol(SecurityIdentifier.Parse(csv[0]), csv[1]),
-                SomeNumericProperty = someNumericProperty,
-                SomeCustomProperty = csv[3],
-                Time =  date - Period,
-                Value = someNumericProperty
+                Symbol = config.Symbol,
+                EndTime = Parse.DateTimeExact(csv[0], "yyyyMMdd"),
+                Value = decimal.Parse(csv[1], NumberStyles.Any, CultureInfo.InvariantCulture),
+                Volume = decimal.Parse(csv[2], NumberStyles.Any, CultureInfo.InvariantCulture),
+                MarketCap = decimal.Parse(csv[3], NumberStyles.Any, CultureInfo.InvariantCulture)
             };
         }
+
+        /// <summary>
+        /// Clones the data
+        /// </summary>
+        /// <returns>A clone of the object</returns>
+        public override BaseData Clone()
+        {
+            return new CoinGecko
+            {
+                Symbol = Symbol,
+                Time = Time,
+                EndTime = EndTime,
+                MarketCap = MarketCap,
+                Value = Value,
+                Volume = Volume
+            };
+        }
+
+        /// <summary>
+        /// Creates a Symbol object for a given market and quote currency
+        /// </summary>
+        /// <param name="market">The market the ticker resides in</param>
+        /// <param name="quoteCurrency">The quote currency of the crypto-currency pair. E.g. USD for BTCUSD</param>
+        /// <param name="securityType">The security type of the ticker resides in</param>
+        /// <returns>A new Symbol object for the specified ticker</returns>
+        public Symbol CreateSymbol(string market, string quoteCurrency = "USD", SecurityType securityType = SecurityType.Crypto)
+        {
+            return Symbol.Create($"{Coin}{quoteCurrency}", securityType, market);
+        }
+
+        /// <summary>
+        /// Indicates whether the data source is tied to an underlying symbol and requires that corporate events be applied to it as well, such as renames and delistings
+        /// </summary>
+        /// <returns>false</returns>
+        public override bool RequiresMapping() => false;
 
         /// <summary>
         /// Indicates whether the data is sparse.
         /// If true, we disable logging for missing files
         /// </summary>
         /// <returns>true</returns>
-        public override bool IsSparseData()
-        {
-            return true;
-        }
+        public override bool IsSparseData() => false;
 
         /// <summary>
         /// Converts the instance to string
         /// </summary>
-        public override string ToString()
-        {
-            return $"{Symbol} - {Value}";
-        }
+        public override string ToString() => $"{Coin} Market Cap: {MarketCap} Price: {Price} Volume: {Volume}";
 
         /// <summary>
         /// Gets the default resolution for this data and security type
         /// </summary>
-        public override Resolution DefaultResolution()
-        {
-            return Resolution.Daily;
-        }
+        public override Resolution DefaultResolution() => Resolution.Daily;
 
         /// <summary>
         /// Gets the supported resolution for this data and security type
         /// </summary>
-        public override List<Resolution> SupportedResolutions()
-        {
-            return DailyResolution;
-        }
+        public override List<Resolution> SupportedResolutions() => DailyResolution;
 
         /// <summary>
         /// Specifies the data time zone for this data type. This is useful for custom data types
         /// </summary>
         /// <returns>The <see cref="T:NodaTime.DateTimeZone" /> of this data type</returns>
-        public override DateTimeZone DataTimeZone()
-        {
-            return DateTimeZone.Utc;
-        }
+        public override DateTimeZone DataTimeZone() => DateTimeZone.Utc;
     }
 }

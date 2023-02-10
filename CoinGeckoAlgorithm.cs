@@ -18,6 +18,7 @@ using QuantConnect.Data;
 using QuantConnect.Util;
 using QuantConnect.Orders;
 using QuantConnect.Algorithm;
+using QuantConnect.Indicators;
 using QuantConnect.DataSource;
 
 namespace QuantConnect.DataLibrary.Tests
@@ -25,20 +26,23 @@ namespace QuantConnect.DataLibrary.Tests
     /// <summary>
     /// Example algorithm using the custom data type as a source of alpha
     /// </summary>
-    public class CustomDataAlgorithm : QCAlgorithm
+    public class CoinGeckoAlgorithm : QCAlgorithm
     {
+        private Symbol _cryptoSymbol;
         private Symbol _customDataSymbol;
-        private Symbol _equitySymbol;
+        private RollingWindow<CoinGecko> _window;
 
         /// <summary>
         /// Initialise the data and resolution required, as well as the cash and start-end dates for your algorithm. All algorithms must initialized.
         /// </summary>
         public override void Initialize()
         {
-            SetStartDate(2013, 10, 07);  //Set Start Date
-            SetEndDate(2013, 10, 11);    //Set End Date
-            _equitySymbol = AddEquity("SPY").Symbol;
-            _customDataSymbol = AddData<MyCustomDataType>(_equitySymbol).Symbol;
+            SetStartDate(2018, 4, 4);  //Set Start Date
+            SetEndDate(2018, 4, 6);    //Set End Date
+
+            _cryptoSymbol = AddCrypto("BTCUSD").Symbol;
+            _customDataSymbol = AddData<CoinGecko>("BTC").Symbol;
+            _window = new RollingWindow<CoinGecko>(2);
         }
 
         /// <summary>
@@ -47,17 +51,23 @@ namespace QuantConnect.DataLibrary.Tests
         /// <param name="slice">Slice object keyed by symbol containing the stock data</param>
         public override void OnData(Slice slice)
         {
-            var data = slice.Get<MyCustomDataType>();
-            if (!data.IsNullOrEmpty())
+            var data = slice.Get<CoinGecko>();
+            if (!data.IsNullOrEmpty() && data.ContainsKey(_customDataSymbol))
             {
-                // based on the custom data property we will buy or short the underlying equity
-                if (data[_customDataSymbol].SomeCustomProperty == "buy")
+                _window.Add(data[_customDataSymbol]);
+                if (_window.IsReady)
                 {
-                    SetHoldings(_equitySymbol, 1);
+                    return;
                 }
-                else if (data[_customDataSymbol].SomeCustomProperty == "sell")
+
+                // Buy BTCUSD if the market cap of BTC is increasing
+                if (_window[0].MarketCap > _window[1].MarketCap)
                 {
-                    SetHoldings(_equitySymbol, -1);
+                    SetHoldings(_cryptoSymbol, 1);
+                }
+                else
+                {
+                    SetHoldings(_cryptoSymbol, -1);
                 }
             }
         }
