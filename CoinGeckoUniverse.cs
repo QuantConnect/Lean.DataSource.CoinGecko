@@ -22,7 +22,7 @@ using System.IO;
 namespace QuantConnect.DataSource
 {
     /// <summary>
-    /// Universe Selection Data for Coin Gecko data which contains Price, Volume and Market Cap 
+    /// Universe Selection Data for Coin Gecko data which contains Price, Volume, and Market Cap in USD for cryptocurrencies
     /// </summary>
     public class CoinGeckoUniverse : CoinGecko
     {

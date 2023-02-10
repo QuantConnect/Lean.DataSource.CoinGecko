@@ -44,7 +44,7 @@ class CoinGeckoUniverseSelectionAlgorithm(QCAlgorithm):
                     
         # Use the CreateSymbol method to generate the Symbol object for
         # the desired market (Coinbase) and quote currency (e.g. USD)
-        return [x.CreateSymbol(Market.GDAX, "USD") for x in selected]
+        return [x.CreateSymbol(SecurityType.Crypto, Market.GDAX, "USD") for x in selected]
     
     def OnSecuritiesChanged(self, changes):
         self.Debug(f'{changes}')

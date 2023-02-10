@@ -55,8 +55,8 @@ namespace QuantConnect.DataProcessing
         /// Creates a new instance of <see cref="CoinGeckoUniverseDataDownloader"/>
         /// </summary>
         /// <param name="destinationFolder">The folder where the data will be saved</param>
-        /// <param name="apiKey">The Vendor API key</param>
-        public CoinGeckoUniverseDataDownloader(string destinationFolder, string processedFolder, string apiKey = null)
+        /// <param name="processedFolder">The folder where the existing data being stored</param>
+        public CoinGeckoUniverseDataDownloader(string destinationFolder, string processedFolder)
         {
             _destinationFolder = destinationFolder;
             _processedFolder = processedFolder;
@@ -64,8 +64,8 @@ namespace QuantConnect.DataProcessing
             _processedUniverseFolder = Path.Combine(_processedFolder, "universe");
 
             // CoinGecko: Our Free API* has a rate limit of 10-50 calls/minute
-            // Represents rate limits of 5 requests per 1 minute
-            _indexGate = new RateGate(5, TimeSpan.FromMinutes(1));
+            // Represents rate limits of 9 requests per 1 minute
+            _indexGate = new RateGate(9, TimeSpan.FromMinutes(1));
 
             Directory.CreateDirectory(_destinationFolder);
             Directory.CreateDirectory(_processedFolder);
@@ -205,7 +205,7 @@ namespace QuantConnect.DataProcessing
             }
             else
             {
-                var days = exists ? "1" : "max";
+                var days = exists ? "1" : "max";    // get all data available by "max" if not exist
                 var url = $"{id}/market_chart?vs_currency=usd&days={days}&interval=daily";
                 value = HttpRequester(url).Result;
                 File.WriteAllText($"{id}.json", value);

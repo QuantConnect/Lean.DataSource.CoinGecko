@@ -48,7 +48,7 @@ namespace QuantConnect.Algorithm.CSharp
                 // define our selection criteria
                 return (from d in data
                         orderby d.MarketCap descending
-                        select d.CreateSymbol(Market.GDAX, "USD")).Take(3);
+                        select d.CreateSymbol(Market.GDAX, "USD", SecurityType.Crypto)).Take(3);
             });
         }
 

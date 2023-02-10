@@ -24,7 +24,7 @@ using System.Globalization;
 namespace QuantConnect.DataSource
 {
     /// <summary>
-    /// Universe Selection for Coin Gecko data which contains Price, Volume and Market Cap
+    /// Coin Gecko data which contains Price, Volume, and Market Cap in USD for cryptocurrencies
     /// </summary>
     public class CoinGecko : BaseData
     {
@@ -118,10 +118,11 @@ namespace QuantConnect.DataSource
         /// </summary>
         /// <param name="market">The market the ticker resides in</param>
         /// <param name="quoteCurrency">The quote currency of the crypto-currency pair. E.g. USD for BTCUSD</param>
+        /// <param name="securityType">The security type of the ticker resides in</param>
         /// <returns>A new Symbol object for the specified ticker</returns>
-        public Symbol CreateSymbol(string market, string quoteCurrency = "USD")
+        public Symbol CreateSymbol(string market, string quoteCurrency = "USD", SecurityType securityType = SecurityType.Crypto)
         {
-            return Symbol.Create($"{Coin}{quoteCurrency}", SecurityType.Crypto, market);
+            return Symbol.Create($"{Coin}{quoteCurrency}", securityType, market);
         }
 
         /// <summary>

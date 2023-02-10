@@ -37,8 +37,11 @@ namespace QuantConnect.DataProcessing
             var destinationDirectory = Path.Combine(
                 Config.Get("temp-output-directory", "/temp-output-directory"),
                 "alternative",
-                "coingecko");
-            var processedDirectory = Path.Combine(Globals.DataFolder, "alternative", "coingecko");
+                CoinGeckoUniverseDataDownloader.VendorName);
+            var processedDirectory = Path.Combine(
+                Config.Get("processed-output-directory", Globals.DataFolder), 
+                "alternative", 
+                CoinGeckoUniverseDataDownloader.VendorName);
 
             CoinGeckoUniverseDataDownloader instance = null;
             try
@@ -48,7 +51,7 @@ namespace QuantConnect.DataProcessing
             }
             catch (Exception err)
             {
-                Log.Error(err, $"QuantConnect.DataProcessing.Program.Main(): The downloader/converter for {CoinGeckoUniverseDataDownloader.VendorName} {CoinGeckoUniverseDataDownloader.VendorName} data failed to be constructed");
+                Log.Error(err, $"QuantConnect.DataProcessing.Program.Main(): The downloader/converter for {CoinGeckoUniverseDataDownloader.VendorName} data failed to be constructed");
                 Environment.Exit(1);
             }
 
