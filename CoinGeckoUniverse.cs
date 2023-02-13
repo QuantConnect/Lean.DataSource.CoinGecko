@@ -64,7 +64,7 @@ namespace QuantConnect.DataSource
             return new CoinGeckoUniverse
             {
                 Symbol = new Symbol(sid, coin),
-                Time = date,
+                EndTime = date,
                 Value = decimal.Parse(csv[1], NumberStyles.Any, CultureInfo.InvariantCulture),
                 Volume = decimal.Parse(csv[2], NumberStyles.Any, CultureInfo.InvariantCulture),
                 MarketCap = decimal.Parse(csv[3], NumberStyles.Any, CultureInfo.InvariantCulture)
