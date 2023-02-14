@@ -42,12 +42,16 @@ namespace QuantConnect.DataProcessing
                 Config.Get("processed-output-directory", Globals.DataFolder), 
                 "alternative", 
                 CoinGeckoUniverseDataDownloader.VendorName);
+            var processingDateValue = Config.Get("processing-date", Environment.GetEnvironmentVariable("QC_DATAFLEET_DEPLOYMENT_DATE"));
+            var processingDate = processingDateValue.IsNullOrEmpty() ? 
+                DateTime.UtcNow.Date :
+                Parse.DateTimeExact(processingDateValue, "yyyyMMdd");
 
             CoinGeckoUniverseDataDownloader instance = null;
             try
             {
                 // Pass in the values we got from the configuration into the downloader/converter.
-                instance = new CoinGeckoUniverseDataDownloader(destinationDirectory, processedDirectory);
+                instance = new CoinGeckoUniverseDataDownloader(destinationDirectory, processedDirectory, processingDate);
             }
             catch (Exception err)
             {
