@@ -43,6 +43,7 @@ namespace QuantConnect.DataProcessing
         private readonly string _processedFolder;
         private readonly string _universeFolder;
         private readonly string _processedUniverseFolder;
+        private readonly int _lookback;
         private readonly int _maxRetries = 5;
         private readonly HttpClient _client;
 
@@ -56,16 +57,19 @@ namespace QuantConnect.DataProcessing
         /// </summary>
         /// <param name="destinationFolder">The folder where the data will be saved</param>
         /// <param name="processedFolder">The folder where the existing data being stored</param>
-        public CoinGeckoUniverseDataDownloader(string destinationFolder, string processedFolder)
+        /// <param name="processDate">The date of data to be processed</param>
+        public CoinGeckoUniverseDataDownloader(string destinationFolder, string processedFolder, DateTime processDate)
         {
             _destinationFolder = destinationFolder;
             _processedFolder = processedFolder;
             _universeFolder = Path.Combine(_destinationFolder, "universe");
             _processedUniverseFolder = Path.Combine(_processedFolder, "universe");
 
+            _lookback = (DateTime.UtcNow.Date - processDate).Days + 1;
+
             // CoinGecko: Our Free API* has a rate limit of 10-50 calls/minute
-            // Represents rate limits of 5 requests per 1 minute
-            _indexGate = new RateGate(5, TimeSpan.FromMinutes(1));
+            // Represents rate limits of 9 requests per 1 minute
+            _indexGate = new RateGate(9, TimeSpan.FromMinutes(1));
 
             Directory.CreateDirectory(_destinationFolder);
             Directory.CreateDirectory(_processedFolder);
@@ -205,7 +209,7 @@ namespace QuantConnect.DataProcessing
             }
             else
             {
-                var days = exists ? "1" : "max";    // get all data available by "max" if not exist
+                var days = exists ? $"{_lookback}" : "max";    // get all data available by "max" if not exist
                 var url = $"{id}/market_chart?vs_currency=usd&days={days}&interval=daily";
                 value = HttpRequester(url).Result;
                 File.WriteAllText($"{id}.json", value);
