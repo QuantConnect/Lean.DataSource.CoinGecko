@@ -14,6 +14,7 @@
 */
 
 using Newtonsoft.Json;
+using QuantConnect.Configuration;
 using QuantConnect.DataSource;
 using QuantConnect.Logging;
 using QuantConnect.Securities;
@@ -68,8 +69,9 @@ namespace QuantConnect.DataProcessing
             _lookback = (DateTime.UtcNow.Date - processDate).Days + 1;
 
             // CoinGecko: Our Free API* has a rate limit of 10-50 calls/minute
-            // Represents rate limits of 9 requests per 1 minute
-            _indexGate = new RateGate(9, TimeSpan.FromMinutes(1));
+            // Represents rate limits of a set number of requests per 1 minute
+            var rate = int.Parse(Config.Get("coin-gecko-rate-limit", "5"));
+            _indexGate = new RateGate(rate, TimeSpan.FromMinutes(1));
 
             Directory.CreateDirectory(_destinationFolder);
             Directory.CreateDirectory(_processedFolder);
