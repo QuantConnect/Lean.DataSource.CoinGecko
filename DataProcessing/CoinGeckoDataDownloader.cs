@@ -70,7 +70,7 @@ namespace QuantConnect.DataProcessing
 
             // CoinGecko: Our Free API* has a rate limit of 10-50 calls/minute
             // Represents rate limits of a set number of requests per 1 minute
-            var rate = int.Parse(Config.Get("coin-gecko-rate-limit", "5"));
+            var rate = Config.GetInt("coin-gecko-rate-limit", 5);
             _indexGate = new RateGate(rate, TimeSpan.FromMinutes(1));
 
             Directory.CreateDirectory(_destinationFolder);
