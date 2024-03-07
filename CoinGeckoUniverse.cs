@@ -15,6 +15,7 @@
 */
 
 using QuantConnect.Data;
+using QuantConnect.Data.UniverseSelection;
 using System;
 using System.Globalization;
 using System.IO;
@@ -24,7 +25,7 @@ namespace QuantConnect.DataSource
     /// <summary>
     /// Universe Selection Data for Coin Gecko data which contains Price, Volume, and Market Cap in USD for cryptocurrencies
     /// </summary>
-    public class CoinGeckoUniverse : CoinGecko
+    public class CoinGeckoUniverse : BaseDataCollection
     {
         /// <summary>
         /// Return the URL string source of the file. This will be converted to a stream
@@ -43,7 +44,8 @@ namespace QuantConnect.DataSource
                     "universe",
                     $"{date.ToStringInvariant(DateFormat.EightCharacter)}.csv"
                 ),
-                SubscriptionTransportMedium.LocalFile
+                SubscriptionTransportMedium.LocalFile,
+                FileFormat.FoldingCollection
             );
         }
 
@@ -59,9 +61,9 @@ namespace QuantConnect.DataSource
         {
             var csv = line.Split(',');
             var coin = csv[0].ToUpperInvariant();
-            var sid = SecurityIdentifier.GenerateBase(typeof(CoinGeckoUniverse), coin, Market.USA);
+            var sid = SecurityIdentifier.GenerateBase(typeof(CoinGecko), coin, Market.USA);
 
-            return new CoinGeckoUniverse
+            return new CoinGecko
             {
                 Symbol = new Symbol(sid, coin),
                 EndTime = date,
@@ -82,9 +84,7 @@ namespace QuantConnect.DataSource
                 Symbol = Symbol,
                 Time = Time,
                 EndTime = EndTime,
-                MarketCap = MarketCap,
-                Value = Value,
-                Volume = Volume
+                Data = Data
             };
         }
     }

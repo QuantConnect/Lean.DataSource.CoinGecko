@@ -38,18 +38,32 @@ namespace QuantConnect.Algorithm.CSharp
             SetCash(100000);
 
             // add a custom universe data source (defaults to usa-equity)
-            AddUniverse<CoinGeckoUniverse>("CoinGeckoUniverse", Resolution.Daily, data =>
+            var universe = AddUniverse<CoinGeckoUniverse>("CoinGeckoUniverse", Resolution.Daily, data =>
             {
-                foreach (var datum in data)
+                foreach (CoinGecko datum in data)
                 {
                     Debug($"{datum.Coin},{datum.MarketCap},{datum.Price}");
                 }
 
                 // define our selection criteria
-                return (from d in data
+                return (from CoinGecko d in data
                         orderby d.MarketCap descending
                         select d.CreateSymbol(Market.GDAX, "USD", SecurityType.Crypto)).Take(3);
             });
+
+            var history = History(universe, 2).ToList();
+            if (history.Count != 2)
+            {
+                throw new Exception($"Unexpected historical data count!");
+            }
+            foreach (var dataForDate in history)
+            {
+                var coarseData = dataForDate.ToList();
+                if (coarseData.Count < 2)
+                {
+                    throw new Exception($"Unexpected historical universe data!");
+                }
+            }
         }
 
         /// <summary>
