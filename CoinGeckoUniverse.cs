@@ -14,6 +14,7 @@
  *
 */
 
+using NodaTime;
 using QuantConnect.Data;
 using QuantConnect.Data.UniverseSelection;
 using System;
@@ -87,5 +88,11 @@ namespace QuantConnect.DataSource
                 Data = Data
             };
         }
+
+        /// <summary>
+        /// Specifies the data time zone for this data type. This is useful for custom data types
+        /// </summary>
+        /// <returns>The <see cref="T:NodaTime.DateTimeZone" /> of this data type</returns>
+        public override DateTimeZone DataTimeZone() => DateTimeZone.Utc;
     }
 }
