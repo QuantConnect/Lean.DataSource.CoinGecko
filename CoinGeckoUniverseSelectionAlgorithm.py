@@ -16,7 +16,7 @@ from AlgorithmImports import *
 ### <summary>
 ### Example algorithm using the custom data type as a source of alpha
 ### </summary>
-class CoinGeckoUniverseSelectionAlgorithm(QCAlgorithm): 
+class CoinGeckoUniverseSelectionAlgorithm(QCAlgorithm):
     def Initialize(self):
         ''' Initialise the data and resolution required, as well as the cash and start-end dates for your algorithm. All algorithms must initialized. '''
 
@@ -28,7 +28,15 @@ class CoinGeckoUniverseSelectionAlgorithm(QCAlgorithm):
         self.SetCash(100000);
 
         # add a custom universe data source
-        self.AddUniverse(CoinGeckoUniverse, "CoinGeckoUniverse", Resolution.Daily, self.UniverseSelection)
+        universe = self.AddUniverse(CoinGeckoUniverse, "CoinGeckoUniverse", Resolution.Daily, self.UniverseSelection)
+
+        history = self.History(universe, TimeSpan(2, 0, 0, 0))
+        if len(history) != 2:
+            raise ValueError(f"Unexpected history count {len(history)}! Expected 2")
+
+        for dataForDate in history:
+            if len(dataForDate) < 2:
+                raise ValueError(f"Unexpected historical universe data!")
 
     def UniverseSelection(self, data):
         ''' Selected the securities
