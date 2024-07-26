@@ -17,6 +17,7 @@
 using Newtonsoft.Json;
 using NUnit.Framework;
 using QuantConnect.Data;
+using QuantConnect.Data.UniverseSelection;
 using QuantConnect.DataSource;
 using System;
 using System.Collections.Generic;
@@ -28,22 +29,11 @@ namespace QuantConnect.DataLibrary.Tests
     public class CoinGeckoMarketCapUniverseTests
     {
         [Test]
-        public void JsonRoundTrip()
-        {
-            var expected = CreateNewInstance();
-            var type = expected.GetType();
-            var serialized = JsonConvert.SerializeObject(expected);
-            var result = JsonConvert.DeserializeObject(serialized, type);
-
-            AssertAreEqual(expected, result);
-        }
-
-        [Test]
         public void Selection()
         {
             var datum = CreateNewSelection();
 
-            var expected = from d in datum
+            var expected = from d in datum.OfType<CoinGecko>()
                            where d.MarketCap > 7
                            select d.Symbol;
             var result = new List<Symbol> { Symbol.Create("BTC", SecurityType.Base, Market.USA) };
@@ -67,36 +57,25 @@ namespace QuantConnect.DataLibrary.Tests
             }
         }
 
-        private BaseData CreateNewInstance()
+        private BaseDataCollection CreateNewSelection()
         {
-            return new CoinGeckoUniverse
+            return new BaseDataCollection(DateTime.Today, Symbol.None, new[]
             {
-                Symbol = Symbol.Create("BTC", SecurityType.Base, Market.USA),
-                Time = DateTime.Today,
-                Value = 10m,
-                MarketCap = 10m
-            };
-        }
-
-        private IEnumerable<CoinGeckoUniverse> CreateNewSelection()
-        {
-            return new[]
-            {
-                new CoinGeckoUniverse
+                new CoinGecko
                 {
                     Symbol = Symbol.Create("BTC", SecurityType.Base, Market.USA),
                     Time = DateTime.Today,
                     Value = 10m,
                     MarketCap = 10m
                 },
-                new CoinGeckoUniverse
+                new CoinGecko
                 {
                     Symbol = Symbol.Create("ETH", SecurityType.Base, Market.USA),
                     Time = DateTime.Today,
                     Value = 5m,
                     MarketCap = 5m
                 }
-            };
+            });
         }
     }
 }

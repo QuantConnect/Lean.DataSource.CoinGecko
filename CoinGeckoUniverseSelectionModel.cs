@@ -101,7 +101,7 @@ namespace QuantConnect.DataSource
             }
 
             var ticker = $"coingecko-universe-{Guid.NewGuid()}";
-            var sid = SecurityIdentifier.GenerateCrypto(ticker, Market.GDAX);
+            var sid = SecurityIdentifier.GenerateCrypto(ticker, Market.Coinbase);
 
             var config = new SubscriptionDataConfig(typeof(CoinGeckoUniverse),
                 symbol: new Symbol(sid, ticker),
