@@ -68,10 +68,11 @@ namespace QuantConnect.DataProcessing
 
             _lookback = (DateTime.UtcNow.Date - processDate).Days + 1;
 
-            // CoinGecko: Our Free API* has a rate limit of 10-50 calls/minute
+            // CoinGecko: Our Pro API* has a rate limit of 500 calls/minute
             // Represents rate limits of a set number of requests per 1 minute
-            var rate = Config.GetInt("coin-gecko-rate-limit", 5);
+            var rate = Config.GetInt("coin-gecko-rate-limit", 500);
             _indexGate = new RateGate(rate, TimeSpan.FromMinutes(1));
+            var apiKey = Config.Get("coin-gecko-api-key", "");
 
             Directory.CreateDirectory(_destinationFolder);
             Directory.CreateDirectory(_processedFolder);
@@ -79,9 +80,8 @@ namespace QuantConnect.DataProcessing
             Directory.CreateDirectory(_processedUniverseFolder);
             
             _client = new HttpClient();
-            _client.BaseAddress = new Uri("https://api.coingecko.com/api/v3/coins/");
-            _client.DefaultRequestHeaders.Clear();
-
+            _client.BaseAddress = new Uri("https://pro-api.coingecko.com/api/v3/coins/");
+            _client.DefaultRequestHeaders.Add("x-cg-pro-api-key", apiKey);
             // Responses are in JSON: you need to specify the HTTP header Accept: application/json
             _client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         }
