@@ -71,7 +71,10 @@ namespace QuantConnect.DataProcessing
             Directory.CreateDirectory(_destinationFolder);
             Directory.CreateDirectory(_processedFolder);
             Directory.CreateDirectory(_universeFolder);
-            Directory.CreateDirectory(_processedUniverseFolder);
+            if (!Directory.Exists(_processedFolder))
+            {
+                Directory.CreateDirectory(_processedUniverseFolder);
+            }
 
             // Create file with blacklisted coins.
             // Some coins have the same symbol, e.g. btc, but different Ids.
