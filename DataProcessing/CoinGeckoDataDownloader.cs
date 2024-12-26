@@ -66,12 +66,15 @@ namespace QuantConnect.DataProcessing
             _destinationFolder = destinationFolder;
             _processedFolder = processedFolder;
             _universeFolder = Path.Combine(_destinationFolder, "universe");
-            _processedUniverseFolder = Path.Combine(_processedFolder, "universe");
-
             Directory.CreateDirectory(_destinationFolder);
-            Directory.CreateDirectory(_processedFolder);
             Directory.CreateDirectory(_universeFolder);
+
+            _processedUniverseFolder = Path.Combine(_processedFolder, "universe");
             if (!Directory.Exists(_processedFolder))
+            {
+                Directory.CreateDirectory(_processedFolder);
+            }
+            if (!Directory.Exists(_processedUniverseFolder))
             {
                 Directory.CreateDirectory(_processedUniverseFolder);
             }
