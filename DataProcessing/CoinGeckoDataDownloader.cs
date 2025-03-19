@@ -115,6 +115,7 @@ namespace QuantConnect.DataProcessing
             var blacklist = GetBlackListId();
             var coinGeckoListByTicker = GetCoinGeckoListByTicker(blacklist);
             var universeData = new Dictionary<DateTime, List<string>>();
+            Log.Trace($"CoinGeckoUniverseDataDownloader.Run(): Tickers: {coinGeckoListByTicker.Count}");
 
             foreach (var (ticker, coinGeckoList) in coinGeckoListByTicker)
             {
@@ -243,14 +244,6 @@ namespace QuantConnect.DataProcessing
         /// <returns>Data from the MarketCharts endpoint for a given Id</returns>
         private CoinGeckoMarketChart GetCoinGeckoMarketChartsForId(string id, bool exists)
         {
-            var filename = $"{id}.json";
-
-            if (File.Exists(filename))
-            {
-                var content = File.ReadAllText(filename);
-                return JsonConvert.DeserializeObject<CoinGeckoMarketChart>(content);
-            }
-
             // If the files exists, we will append the lookback.
             // Otherwise we will fetch the entire history. Free API is limited to 365 days
             var from = exists
@@ -262,8 +255,9 @@ namespace QuantConnect.DataProcessing
             var to = Time.DateTimeToUnixTimeStamp(DateTime.UtcNow.Date);
             var url = $"{id}/market_chart/range?vs_currency=usd&from={from}&to={to}";
             var result = HttpRequester(url).Result;
-            File.WriteAllText(filename, result);
-            return JsonConvert.DeserializeObject<CoinGeckoMarketChart>(result);
+            var data = JsonConvert.DeserializeObject<CoinGeckoMarketChart>(result);
+            Log.Trace($"CoinGeckoUniverseDataDownloader.GetCoinGeckoMarketChartsForId(): Processed: {url}. Entries: {data.MarketCaps.Count}");
+            return data;
         }
 
         /// <summary>
