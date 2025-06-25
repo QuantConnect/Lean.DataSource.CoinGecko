@@ -138,23 +138,7 @@ namespace QuantConnect.DataProcessing
                 SaveContentToFile(_destinationFolder, _processedFolder, ticker,
                     coinGeckoDictionary.Select(x => coinGeckoToString(x.Value)));
 
-                foreach (var (key, coinGecko) in coinGeckoDictionary)
-                {
-                    if (!universeData.ContainsKey(key))
-                    {
-                        universeData[key] = new List<string>();
-                    }
-
-                    universeData[key].Add($"{ticker.ToUpperInvariant()},{coinGecko.Price},{coinGecko.Volume},{coinGecko.MarketCap}");
-                }
-
                 Log.Trace($"CoinGeckoUniverseDataDownloader.Run(): Processed: {ticker}");
-
-            }
-
-            foreach (var (date, content) in universeData)
-            {
-                SaveContentToFile(_universeFolder, _processedUniverseFolder, $"{date:yyyyMMdd}", content);
             }
 
             // Write blacklist file
@@ -162,6 +146,53 @@ namespace QuantConnect.DataProcessing
 
             Log.Trace($"CoinGeckoUniverseDataDownloader.Run(): Finished in {stopwatch.Elapsed.ToStringInvariant(null)}");
             return true;
+        }
+
+        public bool GenerateUniverseFiles()
+        {
+            var success = true;
+            Log.Trace($"CoinGeckoUniverseDataDownloader.GenerateUniverseFiles(): Start Processing Universe Files.");
+            var universeEntriesByDate = new Dictionary<string, List<string>>();
+            var blacklist = GetBlackListId();
+
+            var files = Directory.GetFiles(_destinationFolder, "*.csv", SearchOption.TopDirectoryOnly);
+            foreach (var file in files)
+            {
+                var tickerId = Path.GetFileNameWithoutExtension(file);
+                var ticker = tickerId.ToUpperInvariant();
+                if (tickerId == "coingecko_blacklist" || blacklist.Contains(tickerId))
+                {
+                    continue;
+                }
+
+                foreach (var line in File.ReadAllLines(file))
+                {
+                    var items = line.Split(',');
+                    var date = items[0];
+                    if (!universeEntriesByDate.TryGetValue(date, out var entries))
+                    {
+                        universeEntriesByDate[date] = entries = new();
+                    }
+
+                    try
+                    {
+                        entries.Add($"{ticker},{items[1]},{items[2]},{items[3]}");
+                    }
+                    catch (Exception e)
+                    {
+                        Log.Error($"CoinGeckoUniverseDataDownloader.GenerateUniverseFiles(): Failed to process {date} {ticker} {line} - {e}");
+                        success = false;
+                    }
+                }
+            }
+
+            foreach (var (date, content) in universeEntriesByDate)
+            {
+                SaveContentToFile(_universeFolder, _processedUniverseFolder, $"{date:yyyyMMdd}", content);
+            }
+
+            Log.Trace($"CoinGeckoUniverseDataDownloader.GenerateUniverseFiles(): Finished Processing Universe Files.");
+            return success;
         }
 
         private HashSet<string> GetBlackListId()
