@@ -70,7 +70,7 @@ namespace QuantConnect.DataProcessing
                 {
                     Log.Error($"QuantConnect.DataProcessing.Program.Main(): Failed to download/process {CoinGeckoUniverseDataDownloader.VendorName} data");
                 }
-                if (instance.GenerateUniverseFiles())
+                if (!instance.GenerateUniverseFiles())
                 {
                     Log.Error($"QuantConnect.DataProcessing.Program.Main(): Failed to process {CoinGeckoUniverseDataDownloader.VendorName} universe data");
                     success = false;
