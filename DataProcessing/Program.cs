@@ -61,30 +61,34 @@ namespace QuantConnect.DataProcessing
 
             // No need to edit anything below here for most use cases.
             // The downloader/converter is ran and cleaned up for you safely here.
+            var success = true;
             try
             {
                 // Run the data downloader/converter.
-                /*var success = instance.Run();
+                success = instance.Run();
                 if (!success)
                 {
                     Log.Error($"QuantConnect.DataProcessing.Program.Main(): Failed to download/process {CoinGeckoUniverseDataDownloader.VendorName} data");
-                    Environment.Exit(1);
-                }*/
-                instance.GenerateUniverseFiles();
+                }
+                if (instance.GenerateUniverseFiles())
+                {
+                    Log.Error($"QuantConnect.DataProcessing.Program.Main(): Failed to process {CoinGeckoUniverseDataDownloader.VendorName} universe data");
+                    success = false;
+                }
             }
             catch (Exception err)
             {
                 Log.Error(err, $"QuantConnect.DataProcessing.Program.Main(): The downloader/converter for {CoinGeckoUniverseDataDownloader.VendorName} data exited unexpectedly");
-                Environment.Exit(1);
+                success = false;
             }
             finally
             {
                 // Run cleanup of the downloader/converter once it has finished or crashed.
                 instance.DisposeSafely();
             }
-            
+
             // The downloader/converter was successful
-            Environment.Exit(0);
+            Environment.Exit(success ? 0 : 1);
         }
     }
 }

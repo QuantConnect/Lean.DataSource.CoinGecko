@@ -148,13 +148,14 @@ namespace QuantConnect.DataProcessing
             return true;
         }
 
-        public void GenerateUniverseFiles()
+        public bool GenerateUniverseFiles()
         {
+            var success = true;
             Log.Trace($"CoinGeckoUniverseDataDownloader.GenerateUniverseFiles(): Start Processing Universe Files.");
             var universeEntriesByDate = new Dictionary<string, List<string>>();
             var blacklist = GetBlackListId();
 
-            string[] files = Directory.GetFiles(_destinationFolder, "*.csv", SearchOption.TopDirectoryOnly);
+            var files = Directory.GetFiles(_destinationFolder, "*.csv", SearchOption.TopDirectoryOnly);
             foreach (var file in files)
             {
                 var tickerId = Path.GetFileNameWithoutExtension(file);
@@ -164,11 +165,9 @@ namespace QuantConnect.DataProcessing
                     continue;
                 }
 
-                var lines = File.ReadAllLines(file);
-                foreach (var line in lines)
+                foreach (var line in File.ReadAllLines(file))
                 {
                     var items = line.Split(',');
-
                     var date = items[0];
                     if (!universeEntriesByDate.TryGetValue(date, out var entries))
                     {
@@ -176,13 +175,14 @@ namespace QuantConnect.DataProcessing
                     }
 
                     try
-                        {
-                            entries.Add($"{ticker},{items[1]},{items[2]},{items[3]}");
-                        }
-                        catch (Exception e)
-                        {
-                            Log.Error($"CoinGeckoUniverseDataDownloader.GenerateUniverseFiles(): Failed to process {date} {ticker} - {e}");
-                        }
+                    {
+                        entries.Add($"{ticker},{items[1]},{items[2]},{items[3]}");
+                    }
+                    catch (Exception e)
+                    {
+                        Log.Error($"CoinGeckoUniverseDataDownloader.GenerateUniverseFiles(): Failed to process {date} {ticker} {line} - {e}");
+                        success = false;
+                    }
                 }
             }
 
@@ -192,6 +192,7 @@ namespace QuantConnect.DataProcessing
             }
 
             Log.Trace($"CoinGeckoUniverseDataDownloader.GenerateUniverseFiles(): Finished Processing Universe Files.");
+            return success;
         }
 
         private HashSet<string> GetBlackListId()
