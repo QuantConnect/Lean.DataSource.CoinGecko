@@ -41,6 +41,34 @@ namespace QuantConnect.DataLibrary.Tests
             AssertAreEqual(expected, result);
         }
 
+        [Test]
+        public void ReaderProducesCorrectSymbolAndTimeForUniverseHistory()
+        {
+            var universe = new CoinGeckoUniverse();
+            var config = new SubscriptionDataConfig(
+                typeof(CoinGeckoUniverse),
+                Symbol.Create("CoinGeckoUniverse", SecurityType.Base, Market.USA),
+                Resolution.Daily,
+                TimeZones.Utc,
+                TimeZones.Utc,
+                false, false, false);
+            var date = new DateTime(2025, 11, 6);
+
+            var btc = (CoinGecko)universe.Reader(config, "BTC,50000,123456789,1000000000000", date, false);
+            var eth = (CoinGecko)universe.Reader(config, "ETH,3000,987654321,500000000000", date, false);
+
+            Assert.AreEqual(date, btc.Time);
+
+            // must match the Crypto ID that CreateSymbol returns
+            Assert.AreEqual(Symbol.Create("BTCUSD", SecurityType.Crypto, Market.Coinbase), btc.Symbol);
+
+            // simulate the symbol filter applied during universe history selection
+            var filteredSymbols = new HashSet<Symbol> { btc.CreateSymbol(Market.Coinbase) };
+            var selected = new[] { btc, eth }.Where(x => filteredSymbols.Contains(x.Symbol)).ToList();
+            Assert.AreEqual(1, selected.Count);
+            Assert.AreEqual("BTC", selected[0].Coin);
+        }
+
         private void AssertAreEqual(object expected, object result, bool filterByCustomAttributes = false)
         {
             foreach (var propertyInfo in expected.GetType().GetProperties())

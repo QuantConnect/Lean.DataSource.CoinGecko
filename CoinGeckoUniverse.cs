@@ -62,12 +62,12 @@ namespace QuantConnect.DataSource
         {
             var csv = line.Split(',');
             var coin = csv[0].ToUpperInvariant();
-            var sid = SecurityIdentifier.GenerateBase(typeof(CoinGecko), coin, Market.USA);
+            var sid = SecurityIdentifier.GenerateCrypto($"{coin}USD", Market.Coinbase);
 
             return new CoinGecko
             {
                 Symbol = new Symbol(sid, coin),
-                EndTime = date,
+                Time = date,
                 Value = decimal.Parse(csv[1], NumberStyles.Any, CultureInfo.InvariantCulture),
                 Volume = decimal.Parse(csv[2], NumberStyles.Any, CultureInfo.InvariantCulture),
                 MarketCap = decimal.Parse(csv[3], NumberStyles.Any, CultureInfo.InvariantCulture)
