@@ -382,10 +382,15 @@ namespace QuantConnect.DataProcessing
                 ? Path.Combine(processedFolder, "universe", name)
                 : Path.Combine(processedFolder, name);
 
-            // One row per date (coin file) or per ticker (universe file): a revised value replaces the stored one
+            // One row per date (coin file) or per ticker (universe file): a fetched value replaces the stored one.
+            // Older files can hold duplicate keys written newest first, so the first stored row wins
             var linesByKey = new Dictionary<string, string>();
             var existing = File.Exists(filePath) ? File.ReadAllLines(filePath) : Array.Empty<string>();
-            foreach (var line in existing.Concat(contents).Where(x => !string.IsNullOrWhiteSpace(x)))
+            foreach (var line in existing.Where(x => !string.IsNullOrWhiteSpace(x)))
+            {
+                linesByKey.TryAdd(line.Split(',')[0], line);
+            }
+            foreach (var line in contents.Where(x => !string.IsNullOrWhiteSpace(x)))
             {
                 linesByKey[line.Split(',')[0]] = line;
             }

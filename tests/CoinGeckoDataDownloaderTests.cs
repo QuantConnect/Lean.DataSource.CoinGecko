@@ -90,13 +90,15 @@ namespace QuantConnect.DataLibrary.Tests
             }, File.ReadAllLines(Path.Combine(_destination, "universe", "20260808.csv")));
         }
 
+        // The previous merge put the fetched rows before the stored ones and sorted by date with a stable sort,
+        // so a stored duplicate pair has the newest value first
         [Test]
-        public void DuplicatesAlreadyStoredCollapseToTheLastRow()
+        public void DuplicatesAlreadyStoredKeepTheNewestRow()
         {
             File.WriteAllLines(Path.Combine(_processed, "btc.csv"), new[]
             {
-                "20260808,64872.6007,21662714670.77,1301810026226.84",
-                "20260808,64879.756,21708815799.29,1301953613966.19"
+                "20260808,64879.756,21708815799.29,1301953613966.19",
+                "20260808,64872.6007,21662714670.77,1301810026226.84"
             });
 
             CoinGeckoUniverseDataDownloader.SaveContentToFile(_destination, _processed, "btc", new[]
@@ -109,6 +111,28 @@ namespace QuantConnect.DataLibrary.Tests
                 "20260808,64879.756,21708815799.29,1301953613966.19",
                 "20260809,64916.0054,12371853387.29,1302709015809.28"
             }, File.ReadAllLines(Path.Combine(_destination, "btc.csv")));
+        }
+
+        [Test]
+        public void DuplicatesAlreadyStoredInTheUniverseKeepTheNewestRowOfSkippedCoins()
+        {
+            File.WriteAllLines(Path.Combine(_processed, "universe", "20260808.csv"), new[]
+            {
+                "BTC,64879.756,21708815799.29,1301953613966.19",
+                "BTC,64872.6007,21662714670.77,1301810026226.84",
+                "ETH,3000,10000000000,360000000000"
+            });
+
+            CoinGeckoUniverseDataDownloader.SaveContentToFile(Path.Combine(_destination, "universe"), _processed, "20260808", new[]
+            {
+                "ETH,3001,10000000000,360100000000"
+            });
+
+            CollectionAssert.AreEqual(new[]
+            {
+                "BTC,64879.756,21708815799.29,1301953613966.19",
+                "ETH,3001,10000000000,360100000000"
+            }, File.ReadAllLines(Path.Combine(_destination, "universe", "20260808.csv")));
         }
 
         [Test]
