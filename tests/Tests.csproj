@@ -19,6 +19,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\QuantConnect.DataSource.csproj" />
+    <ProjectReference Include="..\DataProcessing\DataProcessing.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Using Include="NUnit.Framework.Legacy.ClassicAssert" Alias="Assert" />

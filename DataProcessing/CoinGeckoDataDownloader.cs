@@ -46,7 +46,7 @@ namespace QuantConnect.DataProcessing
         private readonly string _processedFolder;
         private readonly string _universeFolder;
         private readonly string _processedUniverseFolder;
-        private readonly int _lookback;
+        private readonly DateTime _processDate;
         private readonly int _maxRetries = 5;
         private readonly HttpClient _client;
 
@@ -85,7 +85,7 @@ namespace QuantConnect.DataProcessing
             var sourceFileName = Path.Combine(processedFolder, "coingecko_blacklist.csv");
             if (File.Exists(sourceFileName)) File.Copy(sourceFileName, _blacklistFile, true);
 
-            _lookback = (int)Time.DateTimeToUnixTimeStamp(processDate);
+            _processDate = processDate;
 
             // CoinGecko: Pro API has a rate limit of 500 calls/minute
             // CoinGecko: Free API has a rate limit of 30 calls/minute
@@ -119,8 +119,8 @@ namespace QuantConnect.DataProcessing
 
             foreach (var (ticker, coinGeckoList) in coinGeckoListByTicker)
             {
-                var exists = File.Exists(Path.Combine(_processedFolder, $"{ticker}.csv"));
-                var marketChartsById = coinGeckoList.Select(x => new { x.Id, Value = GetCoinGeckoMarketChartsForId(x.Id, exists) })
+                var start = GetFetchStart(Path.Combine(_processedFolder, $"{ticker}.csv"), _processDate);
+                var marketChartsById = coinGeckoList.Select(x => new { x.Id, Value = GetCoinGeckoMarketChartsForId(x.Id, start) })
                     .Where(x => !x.Value.MarketCaps.LastOrDefault().IsNullOrEmpty())
                     .ToDictionary(x => x.Id, x => x.Value);
 
@@ -271,17 +271,23 @@ namespace QuantConnect.DataProcessing
         /// this data downloader and the rate limit of CoinGecko API is high 
         /// </summary>
         /// <param name="id">Coin Id</param>
-        /// <param name="exists">is the processed file exists</param>
+        /// <param name="start">First date to fetch, or null to fetch the entire history</param>
         /// <returns>Data from the MarketCharts endpoint for a given Id</returns>
-        private CoinGeckoMarketChart GetCoinGeckoMarketChartsForId(string id, bool exists)
+        private CoinGeckoMarketChart GetCoinGeckoMarketChartsForId(string id, DateTime? start)
         {
-            // If the files exists, we will append the lookback.
-            // Otherwise we will fetch the entire history. Free API is limited to 365 days
-            var from = exists
-                ? _lookback
+            // Free API is limited to 365 days
+            var oldestAllowed = DateTime.UtcNow.AddDays(-365).Date;
+            if (start.HasValue && !_isPro && start.Value < oldestAllowed)
+            {
+                Log.Error($"CoinGeckoUniverseDataDownloader.GetCoinGeckoMarketChartsForId(): {id} is missing data since {start.Value:yyyy-MM-dd}, beyond the 365 days of the Free API. Run with the Pro API to backfill it.");
+                start = oldestAllowed;
+            }
+
+            var from = start.HasValue
+                ? Time.DateTimeToUnixTimeStamp(start.Value)
                 : _isPro
                     ? 1367107200   // April 28th, 2013 (start of the data)
-                    : Time.DateTimeToUnixTimeStamp(DateTime.UtcNow.AddDays(-365).Date);
+                    : Time.DateTimeToUnixTimeStamp(oldestAllowed);
 
             var to = Time.DateTimeToUnixTimeStamp(DateTime.UtcNow.Date);
             var url = $"{id}/market_chart/range?vs_currency=usd&from={from}&to={to}";
@@ -289,6 +295,29 @@ namespace QuantConnect.DataProcessing
             var data = JsonConvert.DeserializeObject<CoinGeckoMarketChart>(result);
             Log.Trace($"CoinGeckoUniverseDataDownloader.GetCoinGeckoMarketChartsForId(): Processed: {url}. Entries: {data.MarketCaps.Count}");
             return data;
+        }
+
+        /// <summary>
+        /// Gets the first date to fetch for a coin: the last stored date when the job missed days, so the gap is backfilled
+        /// </summary>
+        /// <param name="processedFile">Processed file of the coin</param>
+        /// <param name="processDate">The date of data to be processed</param>
+        /// <returns>The first date to fetch, or null if the coin has no stored data</returns>
+        public static DateTime? GetFetchStart(string processedFile, DateTime processDate)
+        {
+            if (!File.Exists(processedFile))
+            {
+                return null;
+            }
+
+            var lastLine = File.ReadLines(processedFile).LastOrDefault(x => !string.IsNullOrWhiteSpace(x));
+            if (lastLine == null)
+            {
+                return null;
+            }
+
+            var lastDate = DateTime.ParseExact(lastLine.Split(',')[0], "yyyyMMdd", CultureInfo.InvariantCulture);
+            return lastDate < processDate ? lastDate : processDate;
         }
 
         /// <summary>
@@ -338,13 +367,13 @@ namespace QuantConnect.DataProcessing
         }
 
         /// <summary>
-        /// Saves contents to disk, deleting existing zip files
+        /// Merges contents with the processed file and saves them to disk, keeping the newest row per date or ticker
         /// </summary>
         /// <param name="destinationFolder">Final destination of the data</param>
         /// <param name="processedFolder">Processed data folder</param>
         /// <param name="name">file name</param>
         /// <param name="contents">Contents to write</param>
-        private static void SaveContentToFile(string destinationFolder, string processedFolder, string name, IEnumerable<string> contents)
+        public static void SaveContentToFile(string destinationFolder, string processedFolder, string name, IEnumerable<string> contents)
         {
             name = $"{name.ToLowerInvariant()}.csv";
             var isUniverse = destinationFolder.Contains("universe");
@@ -353,14 +382,14 @@ namespace QuantConnect.DataProcessing
                 ? Path.Combine(processedFolder, "universe", name)
                 : Path.Combine(processedFolder, name);
 
-            var lines = new HashSet<string>(contents);
-            if (File.Exists(filePath))
+            // One row per date (coin file) or per ticker (universe file): a revised value replaces the stored one
+            var linesByKey = new Dictionary<string, string>();
+            var existing = File.Exists(filePath) ? File.ReadAllLines(filePath) : Array.Empty<string>();
+            foreach (var line in existing.Concat(contents).Where(x => !string.IsNullOrWhiteSpace(x)))
             {
-                foreach (var line in File.ReadAllLines(filePath))
-                {
-                    lines.Add(line);
-                }
+                linesByKey[line.Split(',')[0]] = line;
             }
+            var lines = linesByKey.Values;
 
             var finalLines = isUniverse
                 ? lines.OrderBy(x => x.Split(',').First()).ToList()
